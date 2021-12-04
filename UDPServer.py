@@ -10,12 +10,35 @@ import socket
 #5.Go back to Step 3.
 
 
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-server_socket.bind(('', 5432))
+class Server:
+    def __init__(self, ipAddress, port):
+        print('creating server...')
+        self.ipAddress=ipAddress
+        self.port=port
 
-while True:
-    rand = random.randint(0, 10)
-    message, address = server_socket.recvfrom(1024)
-    message = message.upper()
-    if rand >= 4:
-        server_socket.sendto(message, address)
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.bind((self.ipAddress,self.port))
+
+    def handle_request(self,data,address):
+        print('handling message...')
+        data=data.decode()
+        print('mesajul ajuns la server este: '+data)
+        data=data.upper()
+        self.sock.sendto(data.encode(), address)
+
+    def wait_for_client(self):
+        print('waiting for client...')
+        data, address = self.sock.recvfrom(1024)
+        self.handle_request(data,address)
+
+    def close_server(self):
+        print('closing server...')
+        self.sock.close()
+
+def main():
+    udp_server=Server('127.0.0.1',5555)
+    udp_server.wait_for_client()
+
+
+if __name__=='__main__':
+    main()

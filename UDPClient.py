@@ -13,22 +13,31 @@ import socket
 #4.Process reply and go back to step 2, if necessary.
 #5.Close socket descriptor and exit.
 
-for pings in range(10):
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     #A socket timeout stops the connection after a specified amount of time.
     #A socket timeout is dedicated to monitor the continuous incoming data flow.
     #If the data flow is interrupted for the specified timeout the connection is regarded as stalled/broken
-    client_socket.settimeout(1.0)
-    message = b'Buna'
-    addr = ("127.0.0.1", 5432)
+class Client:
+    def __init__(self,data):
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.data=data
 
-    start = time.time()
-    client_socket.sendto(message, addr)
-    try:
-        data, server = client_socket.recvfrom(1024)
-        end = time.time()
-        elapsed = end - start
-        print(f'{data} {pings} {elapsed}')
-    except socket.timeout:
-        print('REQUEST TIMED OUT')
+    def send_message(self,address):
+        print('sending message to server...')
+        self.sock.sendto(self.data.encode(), address)
+
+
+        data, server = self.sock.recvfrom(1024)
+        data = data.decode()
+        print('mesajul trimis de ' + server[0] + ' la client este: '+data)
+
+
+    def receive_message(self):
+        pass
+
+def main():
+    udp_client=Client('Clientul spune "Buna!"')
+    udp_client.send_message(('127.0.0.1',5555))
+
+if __name__=='__main__':
+    main()
