@@ -25,27 +25,38 @@ server_address = ('', 5007)
 
 class Node:
     def __init__(self):
-        self.origin = "192.168.0.0"
-        self.indx = 0
-        self.neighbors = {self.indx: ["192.168.0.0", 0]}
+        self.origin = "192.168.0.1"
+        self.neighbors = {"192.168.0.1": 0}
 
     # adaugam vecinii nodului curent in vector
     def addNeighbors(self, neighbor1, cost):
-        self.indx += 1
-        self.neighbors[self.indx] = [neighbor1, cost]
+        self.neighbors[neighbor1] = cost
 
     def printTable(self):
+        print('Tabela mea este')
         for neighbor in self.neighbors:
-            print('Destinatie: ' + str(self.neighbors[neighbor][0] + '    cost: ' + str(self.neighbors[neighbor][1])))
+            print('Destinatie: ' + str(neighbor + '    cost: ' + str(self.neighbors[neighbor])))
 
-    def update_table(self, newTable):
+    # addr este adresa de la care primim tabela de rutare
+    def update_table(self, newTable, addr):
         # implementare algoritm bellman ford pentru a determina daca tabela primita ne ofera o ruta mai buna catre
         # noduri
-        for indx in self.neighbors.keys():  # parcurg tabela mea de rutare
-            if newTable[str(indx)][0] != nod2.origin and indx - 1 > 0:
-                # inlocuiesc in tabela in momentul in care gasesc o ruta de cost mai mic
-                if self.neighbors[indx][1] > self.neighbors[indx - 1][1] + newTable[str(indx)][1]:
-                    self.neighbors[indx][1] = self.neighbors[indx - 1][1] + newTable[str(indx)][1]
+        adresses = []
+        # lista cu toate adresele continute in tabela de rutara a mea
+        for address in self.neighbors.keys():
+            adresses.append(address)
+
+        # verific daca in tabela primita este o adresa pe care nu o am, daca da o adaug
+        for i in newTable.keys():
+            if i not in adresses:  # adun la costul pana la nodul intermediar costul de la nodul intemediar pana la dest
+                self.neighbors[i] = self.neighbors[addr] + newTable[i]
+
+        for i in self.neighbors.keys():  # parcurg adresele
+            # alg bellman-ford: daca valoarea prin nod intermediar(nodul al carui tabela de rutare il avem acum) este
+            # mai buna decat cea din tabela noastra  o inlocuim
+            if self.neighbors[i] > self.neighbors[addr] + newTable[i] and i != self.origin:
+                self.neighbors[i] = self.neighbors[addr] + newTable[i]
+
 
 # fiecare nod are tabelul de rutare ce contine destinatia, next-hop
 # si distanta de la nodul nostru la destinatie
@@ -77,7 +88,7 @@ def recv():
     mreq = struct.pack('4sL', group, socket.INADDR_ANY)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
     data, address = sock.recvfrom(1024)
-    return data
+    return data, address
 
 
 if __name__ == '__main__':
@@ -85,26 +96,26 @@ if __name__ == '__main__':
     # creez tabela pt nodul meu
     nod2 = Node()
     # adaug nodurile vecine si costul pana la ele
-    nod2.addNeighbors('192.168.0.1', 1)
-    nod2.addNeighbors('192.168.0.2', 5)
+    nod2.addNeighbors('192.168.0.0', 19)
+    nod2.addNeighbors('192.168.0.2', 19)
+    nod2.addNeighbors('192.168.0.3', 19)
     nod2.printTable()
-    print("Trimit mesaj tabela mea de rutare.")
 
     if sys.argv[1] == "recv":
-        d = recv()
+        d, addr = recv()
         t = json.loads(d.decode())
         nghTable = t["a"]  # contine tabela de rutare primita
         print('Destinatie         cost')
         for key in nghTable:
-            print(str(nghTable[key][0]) + "         " + str(nghTable[key][1]))
-        nod2.update_table(nghTable)
+            print(key + "         " + str(nghTable[key]))
+        nod2.update_table(nghTable, '192.168.0.1')
         print('Tabela updatata este:')
         nod2.printTable()
-        print("Trimit mesaj tabela mea de rutare.")
+
     else:
         packet2 = Packet()
         packet2.addValues(nod2.neighbors)
         d2 = json.dumps({"a": packet2.vector})
-
+        print("Trimit mesaj tabela mea de rutare.")
         # trimit tabela de rutare
         send(d2.encode())
