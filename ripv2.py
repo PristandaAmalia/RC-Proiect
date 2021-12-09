@@ -47,7 +47,6 @@ class Node:
                 if self.neighbors[indx][1] > self.neighbors[indx - 1][1] + newTable[str(indx)][1]:
                     self.neighbors[indx][1] = self.neighbors[indx - 1][1] + newTable[str(indx)][1]
 
-
 # fiecare nod are tabelul de rutare ce contine destinatia, next-hop
 # si distanta de la nodul nostru la destinatie
 # prin pachete vom trimite vectorii de distanta
