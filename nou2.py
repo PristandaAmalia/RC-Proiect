@@ -3,7 +3,7 @@ import threading
 import struct
 import time
 import json
-
+from multiprocessing import Lock
 adreseIp = ['192.168.0.1', '192.168.0.2', '192.168.0.3', '192.168.0.4', '192.168.0.5']
 
 MCAST_GRP = '224.1.1.1'
@@ -11,9 +11,11 @@ MCAST_PORT = 5004
 
 ttl = 16
 
-
+mutex=threading.Lock()
+#ar trebui sa am o metoda de sincronizare a datelor=>mutex?
 class TabelaRutare:
     dict = {}
+
 
     def __init__(self):
         # tabela de rutare va fi de forma Destinatie:NextHop:metrica
@@ -26,7 +28,9 @@ class TabelaRutare:
         return json.dumps(self.dict).encode("utf-8")
 
     def updateRuta(self, dest, nextHop, metrica):
+        mutex.acquire()
         self.dict[dest] = [nextHop, metrica]
+        mutex.release()
 
 
 tabelaRutare = TabelaRutare()
@@ -88,8 +92,9 @@ class Network:
                     tabelaRutare.updateRuta(y, clientAdress, newTable[y][1] + tabelaRutare.dict[clientAdress][1])
 
             else:
-
+                mutex.acquire()
                 tabelaRutare.dict.update({y: [newTable[y][0], newTable[y][1] + 1]})
+                mutex.release()
 
     def receiveMessage(self):
         while True:
