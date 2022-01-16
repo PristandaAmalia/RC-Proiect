@@ -25,9 +25,10 @@ running = False
 
 
 #https://pypi.org/project/netifaces/
+#----------------------------
 for interface in netifaces.interfaces():
     if interface != "lo" and interface != "enp0s3":
-
+        #----------------------------
         #addresses of a particular interface by doing netifaces.ifaddresses(interface)
         addr = netifaces.ifaddresses(interface)
         #addr[netifaces.AF_INET] -> [{'broadcast': '10.15.255.255', 'netmask': '255.240.0.0', 'addr': '10.0.1.4'}]
@@ -38,7 +39,7 @@ for interface in netifaces.interfaces():
 
         netmask = addr[netifaces.AF_INET][0]['netmask']
         netmask_interfaces.append(netmask)
-
+#------------------------------
 lock = threading.Lock()
 
 
@@ -180,7 +181,7 @@ class RipV2:
         #se creeaza socketurile multicast pentru fiecare interfata
         for ip in ip_interfaces:
             #https://stackoverflow.com/questions/603852/how-do-you-udp-multicast-in-python
-
+            #----------------------------------------
             #send
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
             sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 20)
@@ -194,7 +195,7 @@ class RipV2:
 
             mreq = socket.inet_aton(mcast_group) + socket.inet_aton(ip)
             sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
-
+            #----------------------------------------
             self.mcast_sock_list.append(sock)
 
 
